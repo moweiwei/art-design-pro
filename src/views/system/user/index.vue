@@ -12,7 +12,7 @@
       <ArtTableHeader v-model:columns="columnChecks" :loading="loading" @refresh="refreshData">
         <template #left>
           <ElSpace wrap>
-            <ElButton @click="showDialog('add')" v-ripple>新增用户</ElButton>
+            <ElButton @click="handleAdd" v-ripple type="primary">新增用户</ElButton>
           </ElSpace>
         </template>
       </ArtTableHeader>
@@ -29,13 +29,8 @@
       >
       </ArtTable>
 
-      <!-- 用户弹窗 -->
-      <UserDialog
-        v-model:visible="dialogVisible"
-        :type="dialogType"
-        :user-data="currentUserData"
-        @submit="handleDialogSubmit"
-      />
+      <!-- 用户弹窗 - ArtDialog 已封装在内部 -->
+      <UserDialog :dialog-instance="userDialog" />
     </ElCard>
   </div>
 </template>
@@ -44,6 +39,7 @@
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import { ACCOUNT_TABLE_DATA } from '@/mock/temp/formData'
   import { useTable } from '@/composables/useTable'
+  import { useDialog } from '@/composables/useDialog'
   import { fetchGetUserList } from '@/api/system-manage'
   import UserSearch from './modules/user-search.vue'
   import UserDialog from './modules/user-dialog.vue'
@@ -52,10 +48,8 @@
 
   type UserListItem = Api.SystemManage.UserListItem
 
-  // 弹窗相关
-  const dialogType = ref<Form.DialogType>('add')
-  const dialogVisible = ref(false)
-  const currentUserData = ref<Partial<UserListItem>>({})
+  // 使用 useDialog composable
+  const userDialog = useDialog()
 
   // 选中行
   const selectedRows = ref<UserListItem[]>([])
@@ -165,7 +159,7 @@
             h('div', [
               h(ArtButtonTable, {
                 type: 'edit',
-                onClick: () => showDialog('edit', row)
+                onClick: () => handleEdit(row)
               }),
               h(ArtButtonTable, {
                 type: 'delete',
@@ -208,14 +202,37 @@
   }
 
   /**
-   * 显示用户弹窗
+   * 新增用户
    */
-  const showDialog = (type: Form.DialogType, row?: UserListItem): void => {
-    console.log('打开弹窗:', { type, row })
-    dialogType.value = type
-    currentUserData.value = row || {}
-    nextTick(() => {
-      dialogVisible.value = true
+  const handleAdd = () => {
+    userDialog.open({
+      title: '新增用户',
+      width: '50%',
+      onSubmit: async (formData: any) => {
+        console.log('formData11', formData)
+        // await createUser(formData)
+        ElMessage.success('添加成功')
+        await refreshData()
+      }
+    })
+  }
+
+  /**
+   * 编辑用户
+   */
+  const handleEdit = (row: UserListItem) => {
+    userDialog.open({
+      title: '编辑用户',
+      width: '50%',
+      props: {
+        record: row
+      },
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      onSubmit: async (formData: any) => {
+        // await updateUser(row.id, formData)
+        ElMessage.success('更新成功')
+        await refreshData()
+      }
     })
   }
 
@@ -230,19 +247,8 @@
       type: 'error'
     }).then(() => {
       ElMessage.success('注销成功')
+      refreshData()
     })
-  }
-
-  /**
-   * 处理弹窗提交事件
-   */
-  const handleDialogSubmit = async () => {
-    try {
-      dialogVisible.value = false
-      currentUserData.value = {}
-    } catch (error) {
-      console.error('提交失败:', error)
-    }
   }
 
   /**
