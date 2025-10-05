@@ -153,6 +153,7 @@
                   <li @click="goPage('/system/user-center')">
                     <i class="menu-icon iconfont-sys">&#xe734;</i>
                     <span class="menu-txt">{{ $t('topBar.user.userCenter') }}</span>
+                    <span class="menu-txt">{{ $t('topBar2.user.userCenter') }}</span>
                   </li>
                   <li @click="toDocs()">
                     <i class="menu-icon iconfont-sys" style="font-size: 15px">&#xe828;</i>
